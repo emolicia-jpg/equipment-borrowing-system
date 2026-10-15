@@ -1,0 +1,56 @@
+<%- include('partials/header') %>
+
+<h2>Equipment Inventory</h2>
+
+<% if (user.role === 'admin' || user.role === 'custodian') { %>
+  <div class="card mb-4">
+    <div class="card-header fw-bold">Add New Equipment</div>
+    <div class="card-body">
+      <form action="/equipment/add" method="POST" class="row g-3">
+        <div class="col-md-3">
+          <input type="text" name="name" class="form-control" placeholder="Item Name" required>
+        </div>
+        <div class="col-md-3">
+          <input type="text" name="category" class="form-control" placeholder="Category" required>
+        </div>
+        <div class="col-md-3">
+          <input type="number" name="total_qty" class="form-control" placeholder="Quantity" required>
+        </div>
+        <div class="col-md-3">
+          <button type="submit" class="btn btn-success w-100">Add Item</button>
+        </div>
+      </form>
+    </div>
+  </div>
+<% } %>
+
+<table class="table table-bordered table-striped bg-white shadow-sm">
+  <thead class="table-dark">
+    <tr>
+      <th>ID</th>
+      <th>Equipment Name</th>
+      <th>Category</th>
+      <th>Total Quantity</th>
+      <th>Available Quantity</th>
+      <th>Condition</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% equipment.forEach(item => { %>
+      <tr>
+        <td><%= item.id %></td>
+        <td><%= item.name %></td>
+        <td><%= item.category %></td>
+        <td><%= item.total_qty %></td>
+        <td>
+          <span class="badge <%= item.available_qty > 0 ? 'bg-success' : 'bg-danger' %>">
+            <%= item.available_qty %>
+          </span>
+        </td>
+        <td><%= item.condition %></td>
+      </tr>
+    <% }) %>
+  </tbody>
+</table>
+
+<%- include('partials/footer') %>

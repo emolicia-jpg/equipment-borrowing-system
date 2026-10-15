@@ -1,0 +1,20 @@
+<%- include('partials/header') %>
+
+<div class="row">
+  <div class="col-md-12">
+    <div class="p-5 mb-4 bg-white rounded-3 shadow-sm">
+      <h1 class="display-6">Welcome, <%= user.name %>!</h1>
+      <p class="lead">Role: <span class="badge bg-info text-dark"><%= user.role.toUpperCase() %></span></p>
+      <hr>
+      <% if (error) { %>
+        <div class="alert alert-danger"><%= error %></div>
+      <% } %>
+      <div class="d-flex gap-3">
+        <a href="/equipment" class="btn btn-primary">Browse Available Equipment</a>
+        <a href="/requests" class="btn btn-secondary">Manage/View Borrowing Requests</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>
