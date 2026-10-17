@@ -1,100 +1,98 @@
-const sqlite3 = require('sqlite3').verbose();
+const mysql = require('mysql2/promise');
 const bcrypt = require('bcrypt');
-const path = require('path');
+require('dotenv').config();
 
-const dbPath = path.resolve(__dirname, '../database.db');
-const db = new sqlite3.Database(dbPath);
-
-db.serialize(() => {
-  // Users table
-  db.run(`
-    CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      email TEXT UNIQUE NOT NULL,
-      password TEXT NOT NULL,
-      role TEXT NOT NULL CHECK(role IN ('student', 'faculty', 'custodian', 'admin'))
-    )
-  `);
-
-  // Equipment table
-  db.run(`
-    CREATE TABLE IF NOT EXISTS equipment (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      category TEXT NOT NULL,
-      total_qty INTEGER NOT NULL,
-      available_qty INTEGER NOT NULL,
-      condition TEXT DEFAULT 'Good'
-    )
-  `);
-
-  // Borrowing Requests table
-  db.run(`
-    CREATE TABLE IF NOT EXISTS requests (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
-      equipment_id INTEGER NOT NULL,
-      purpose TEXT NOT NULL,
-      quantity INTEGER NOT NULL,
-      borrow_date TEXT NOT NULL,
-      return_date TEXT NOT NULL,
-      status TEXT DEFAULT 'Pending' CHECK(status IN ('Pending', 'Approved', 'Borrowed', 'Returned', 'Denied')),
-      pre_condition TEXT,
-      post_condition TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY(user_id) REFERENCES users(id),
-      FOREIGN KEY(equipment_id) REFERENCES equipment(id)
-    )
-  `);
-
-  // Seed default admin and sample equipment if empty
-  db.get("SELECT COUNT(*) AS count FROM users", async (err, row) => {
-    if (err) {
-      console.error('Unable to check whether the database needs seeding:', err);
-      return;
-    }
-
-    if (row && row.count === 0) {
-      try {
-        const [hashedPassword, studentPass, custodianPass] = await Promise.all([
-          bcrypt.hash('admin123', 10),
-          bcrypt.hash('student123', 10),
-          bcrypt.hash('custodian123', 10)
-        ]);
-
-        db.run(
-          "INSERT INTO users (name, email, password, role) VALUES ('System Admin', 'admin@cspc.edu.ph', ?, 'admin')",
-          [hashedPassword],
-          reportSeedError
-        );
-        db.run(
-          "INSERT INTO users (name, email, password, role) VALUES ('Janelle Dela Cruz', 'janelle@cspc.edu.ph', ?, 'student')",
-          [studentPass],
-          reportSeedError
-        );
-        db.run(
-          "INSERT INTO users (name, email, password, role) VALUES ('Equipment Custodian', 'custodian@cspc.edu.ph', ?, 'custodian')",
-          [custodianPass],
-          reportSeedError
-        );
-
-        db.run("INSERT INTO equipment (name, category, total_qty, available_qty, condition) VALUES ('LCD Projector', 'Electronics', 5, 5, 'Good')", reportSeedError);
-        db.run("INSERT INTO equipment (name, category, total_qty, available_qty, condition) VALUES ('Arduino Uno Kit', 'Microcontrollers', 15, 15, 'Good')", reportSeedError);
-        db.run("INSERT INTO equipment (name, category, total_qty, available_qty, condition) VALUES ('HDMI Cable 10m', 'Accessories', 10, 10, 'Good')", reportSeedError);
-
-        console.log('Database seeded with initial user accounts and equipment items.');
-      } catch (seedError) {
-        console.error('Unable to seed the database:', seedError);
-      }
-    }
-  });
+// The database and tables are created in phpMyAdmin (schema.sql / migrate_roles.sql).
+// This file only connects to it and creates one demo account per stakeholder role.
+const pool = mysql.createPool({
+  host: process.env.DB_HOST || 'localhost',
+  port: Number(process.env.DB_PORT) || 3306,
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '', // XAMPP default: empty
+  database: process.env.DB_NAME || 'equipment_borrowing',
+  waitForConnections: true,
+  connectionLimit: 10
 });
 
-function reportSeedError(err) {
-  if (err) {
-    console.error('Unable to seed the database:', err);
-  }
+// One demo account per stakeholder (change/remove these before real use)
+const DEMO_USERS = [
+  ['Janelle Dela Cruz',        'janelle@my.cspc.edu.ph',     'student123',     'student'],
+  ['Demo Instructor',          'instructor@my.cspc.edu.ph',  'instructor123',  'faculty'],
+  ['Equipment Custodian',      'custodian@my.cspc.edu.ph',   'custodian123',   'custodian'],
+  ['Program Coordinator',      'coordinator@my.cspc.edu.ph', 'coordinator123', 'coordinator'],
+  ['Property Office',          'property@my.cspc.edu.ph',    'property123',    'property'],
+  ['College Dean',             'dean@my.cspc.edu.ph',        'dean123',        'dean'],
+  ['System Admin',             'admin@my.cspc.edu.ph',       'admin123',       'admin'],
+  ['Campus Security',          'security@my.cspc.edu.ph',    'security123',    'security']
+];
+
+async function ensureUser(name, email, plainPassword, role) {
+  const [rows] = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
+  if (rows.length) return;
+  const hash = await bcrypt.hash(plainPassword, 10);
+  await pool.query(
+    'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)',
+    [name, email, hash, role]
+  );
 }
+
+const ready = (async () => {
+  await pool.query('SELECT 1'); // test connection
+  for (const [name, email, pass, role] of DEMO_USERS) {
+    await ensureUser(name, email, pass, role);
+  }
+  console.log('MySQL connected and demo accounts are ready.');
+})().catch((err) => {
+  console.error(
+    'Unable to connect to MySQL. Is MySQL running in XAMPP, and did you run schema.sql / migrate_roles.sql in phpMyAdmin?',
+    err
+  );
+});
+
+/* sqlite3-style wrapper so existing routes using
+   db.get / db.all / db.run(sql, params, callback) keep working.
+   In db.run callbacks, `this.lastID` and `this.changes` are available. */
+function normalize(params, callback) {
+  if (typeof params === 'function') return [[], params];
+  return [params || [], callback];
+}
+
+const db = {
+  ready,
+
+  get(sql, params, callback) {
+    [params, callback] = normalize(params, callback);
+    ready
+      .then(() => pool.query(sql, params))
+      .then(([rows]) => callback && callback(null, rows[0]))
+      .catch((err) => callback && callback(err));
+  },
+
+  all(sql, params, callback) {
+    [params, callback] = normalize(params, callback);
+    ready
+      .then(() => pool.query(sql, params))
+      .then(([rows]) => callback && callback(null, rows))
+      .catch((err) => callback && callback(err));
+  },
+
+  run(sql, params, callback) {
+    [params, callback] = normalize(params, callback);
+    ready
+      .then(() => pool.query(sql, params))
+      .then(([result]) => {
+        if (callback) {
+          callback.call({ lastID: result.insertId, changes: result.affectedRows }, null);
+        }
+      })
+      .catch((err) => callback && callback.call({}, err));
+  },
+
+  // Promise style for new code: const [rows] = await db.query(sql, params)
+  async query(sql, params) {
+    await ready;
+    return pool.query(sql, params);
+  }
+};
 
 module.exports = db;

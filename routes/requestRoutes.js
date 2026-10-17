@@ -37,6 +37,10 @@ router.get('/', isAuthenticated, (req, res) => {
 
 // FR-2 & FR-3: Submit Borrow Request with Availability Validation
 router.post('/submit', isAuthenticated, (req, res) => {
+  if (req.session.user.role === 'admin') {
+    return res.status(403).send('Administrators cannot submit equipment borrowing requests.');
+  }
+
   const { equipment_id, purpose, quantity, borrow_date, return_date } = req.body;
   const qtyNum = parseInt(quantity);
 
@@ -59,31 +63,34 @@ router.post('/submit', isAuthenticated, (req, res) => {
   });
 });
 
-// FR-4 & FR-5: Approve & Release Request
-router.post('/approve/:id', isAuthenticated, authorizeRoles('custodian', 'admin'), (req, res) => {
+// Release a pending request to the borrower.
+router.post('/release/:id', isAuthenticated, authorizeRoles('admin', 'custodian'), (req, res) => {
   const requestId = req.params.id;
 
   db.get('SELECT * FROM requests WHERE id = ?', [requestId], (err, reqRecord) => {
     if (err || !reqRecord || reqRecord.status !== 'Pending') return res.redirect('/requests');
 
     db.get('SELECT available_qty FROM equipment WHERE id = ?', [reqRecord.equipment_id], (err, eq) => {
+      if (err || !eq) return res.status(500).send('Unable to check equipment availability.');
       if (eq.available_qty < reqRecord.quantity) {
-        return res.status(400).send('Cannot approve: Insufficient stock available.');
+        return res.status(400).send('Cannot release item: insufficient stock available.');
       }
 
       // Update available stock
-      db.run('UPDATE equipment SET available_qty = available_qty - ? WHERE id = ?', [reqRecord.quantity, reqRecord.equipment_id]);
+      db.run('UPDATE equipment SET available_qty = available_qty - ? WHERE id = ?', [reqRecord.quantity, reqRecord.equipment_id], (stockError) => {
+        if (stockError) return res.status(500).send('Unable to update equipment availability.');
 
-      // Update request status to Borrowed
-      db.run("UPDATE requests SET status = 'Borrowed', pre_condition = 'Checked Good' WHERE id = ?", [requestId], () => {
-        res.redirect('/requests');
+        db.run("UPDATE requests SET status = 'Borrowed', pre_condition = 'Checked Good' WHERE id = ?", [requestId], (requestError) => {
+          if (requestError) return res.status(500).send('Unable to record item release.');
+          res.redirect('/requests');
+        });
       });
     });
   });
 });
 
 // FR-6: Record Return
-router.post('/return/:id', isAuthenticated, authorizeRoles('custodian', 'admin'), (req, res) => {
+router.post('/return/:id', isAuthenticated, authorizeRoles('admin', 'custodian'), (req, res) => {
   const requestId = req.params.id;
   const { post_condition } = req.body;
 
@@ -91,11 +98,17 @@ router.post('/return/:id', isAuthenticated, authorizeRoles('custodian', 'admin')
     if (err || !reqRecord || reqRecord.status !== 'Borrowed') return res.redirect('/requests');
 
     // Restock equipment
-    db.run('UPDATE equipment SET available_qty = available_qty + ? WHERE id = ?', [reqRecord.quantity, reqRecord.equipment_id]);
+    db.run('UPDATE equipment SET available_qty = available_qty + ? WHERE id = ?', [reqRecord.quantity, reqRecord.equipment_id], (stockError) => {
+      if (stockError) return res.status(500).send('Unable to update equipment availability.');
 
-    // Set request status to Returned
-    db.run("UPDATE requests SET status = 'Returned', post_condition = ? WHERE id = ?", [post_condition || 'Returned Good', requestId], () => {
-      res.redirect('/requests');
+      db.run(
+        "UPDATE requests SET status = 'Returned', post_condition = ? WHERE id = ?",
+        [post_condition || 'Returned Good', requestId],
+        (requestError) => {
+          if (requestError) return res.status(500).send('Unable to record item return.');
+          res.redirect('/requests');
+        }
+      );
     });
   });
 });

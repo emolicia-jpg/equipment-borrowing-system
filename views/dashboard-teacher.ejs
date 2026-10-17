@@ -1,0 +1,43 @@
+<section class="dashboard-welcome">
+  <div class="dashboard-welcome-copy">
+    <span class="eyebrow">CSPC EQUIPMENT BORROWING SYSTEM</span>
+    <h1>Welcome back, <%= user.name %></h1>
+    <p>Find equipment for your teaching needs and manage your borrowing requests.</p>
+    <span class="role-pill">Instructor account</span>
+  </div>
+  <div class="dashboard-mark" aria-hidden="true">
+    <img src="/images/cspc-logo.jpg" alt="">
+  </div>
+</section>
+
+<section class="dashboard-section" aria-labelledby="quick-actions-heading">
+  <div class="section-heading">
+    <div>
+      <span class="eyebrow">INSTRUCTOR SERVICES</span>
+      <h2 id="quick-actions-heading">What would you like to do?</h2>
+    </div>
+    <p>Browse equipment or follow your requests.</p>
+  </div>
+  <div class="row g-4">
+    <div class="col-md-6">
+      <a class="action-card" href="/equipment">
+        <span class="action-icon equipment-icon" aria-hidden="true">01</span>
+        <span class="action-card-copy">
+          <strong>Browse equipment</strong>
+          <span>View the inventory and check what is available.</span>
+        </span>
+        <span class="action-arrow" aria-hidden="true">&rarr;</span>
+      </a>
+    </div>
+    <div class="col-md-6">
+      <a class="action-card" href="/requests">
+        <span class="action-icon request-icon" aria-hidden="true">02</span>
+        <span class="action-card-copy">
+          <strong>My borrowing requests</strong>
+          <span>Submit equipment requests and check their status.</span>
+        </span>
+        <span class="action-arrow" aria-hidden="true">&rarr;</span>
+      </a>
+    </div>
+  </div>
+</section>

@@ -5,22 +5,35 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Equipment Borrowing System - CSPC</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
 </head>
-<body class="bg-light">
-  <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+<body class="system-page">
+  <% const activePath = typeof currentPath === 'string' ? currentPath : ''; %>
+  <nav class="navbar navbar-expand-lg navbar-dark system-navbar">
     <div class="container">
-      <a class="navbar-brand fw-bold" href="/dashboard">CSPC Equipment System</a>
+      <a class="navbar-brand fw-bold system-brand" href="/dashboard">
+        <img class="system-logo" src="/images/cspc-logo.jpg" alt="CSPC logo">
+        <span>CSPC Equipment System</span>
+      </a>
       <% if (user) { %>
-        <div class="navbar-nav me-auto">
-          <a class="nav-link" href="/dashboard">Dashboard</a>
-          <a class="nav-link" href="/equipment">Equipment List</a>
-          <a class="nav-link" href="/requests">Requests</a>
-        </div>
-        <div class="navbar-nav">
-          <span class="nav-item nav-link text-white me-2">Logged in as: <strong><%= user.name %></strong> (<%= user.role %>)</span>
-          <a class="btn btn-outline-light btn-sm" href="/auth/logout">Logout</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#system-navigation" aria-controls="system-navigation" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="system-navigation">
+          <div class="navbar-nav me-auto system-nav-links">
+            <a class="nav-link <%= activePath === '/dashboard' ? 'active' : '' %>" href="/dashboard" <%= activePath === '/dashboard' ? 'aria-current="page"' : '' %>>Dashboard</a>
+            <a class="nav-link <%= activePath.startsWith('/equipment') ? 'active' : '' %>" href="/equipment" <%= activePath.startsWith('/equipment') ? 'aria-current="page"' : '' %>>Equipment</a>
+            <a class="nav-link <%= activePath.startsWith('/requests') ? 'active' : '' %>" href="/requests" <%= activePath.startsWith('/requests') ? 'aria-current="page"' : '' %>>Requests</a>
+          </div>
+          <div class="system-user-menu">
+            <div class="system-user-copy">
+              <span class="system-user-name"><%= user.name %></span>
+              <span class="system-user-role"><%= user.role === 'faculty' ? 'Instructor' : user.role %></span>
+            </div>
+            <a class="btn btn-outline-light btn-sm system-logout" href="/auth/logout">Log out</a>
+          </div>
         </div>
       <% } %>
     </div>
   </nav>
-  <div class="container">
+  <main class="container app-content">

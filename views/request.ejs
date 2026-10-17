@@ -1,35 +1,45 @@
 <%- include('partials/header') %>
 
-<h2>Borrowing Requests</h2>
+<section class="page-heading">
+  <span class="eyebrow">BORROWING ACTIVITY</span>
+  <h1>Requests</h1>
+  <p><%= user.role === 'custodian' ? 'Release equipment to borrowers and record items when they are returned.' : user.role === 'admin' ? 'Review borrowing activity across the system.' : 'Submit an equipment request and keep track of its status.' %></p>
+</section>
 
+<% if (user.role !== 'admin') { %>
 <!-- Submit Request Form -->
-<div class="card mb-4">
-  <div class="card-header fw-bold">Submit Equipment Borrow Request</div>
+<div class="card app-card mb-4">
+  <div class="card-header app-card-header">
+    <div>
+      <span class="eyebrow">NEW REQUEST</span>
+      <h2>Request equipment</h2>
+    </div>
+  </div>
   <div class="card-body">
     <form action="/requests/submit" method="POST" class="row g-3">
       <div class="col-md-3">
-        <label>Select Equipment</label>
-        <select name="equipment_id" class="form-select" required>
+        <label for="request-equipment" class="form-label">Equipment</label>
+        <select id="request-equipment" name="equipment_id" class="form-select" required>
           <% equipmentList.forEach(item => { %>
             <option value="<%= item.id %>"><%= item.name %> (Available: <%= item.available_qty %>)</option>
           <% }) %>
         </select>
       </div>
       <div class="col-md-2">
-        <label>Quantity</label>
-        <input type="number" name="quantity" min="1" value="1" class="form-control" required>
+        <label for="request-quantity" class="form-label">Quantity</label>
+        <input id="request-quantity" type="number" name="quantity" min="1" value="1" class="form-control" required>
       </div>
       <div class="col-md-3">
-        <label>Purpose</label>
-        <input type="text" name="purpose" class="form-control" placeholder="Class activity, thesis..." required>
+        <label for="request-purpose" class="form-label">Purpose</label>
+        <input id="request-purpose" type="text" name="purpose" class="form-control" placeholder="What will you use it for?" required>
       </div>
       <div class="col-md-2">
-        <label>Borrow Date</label>
-        <input type="date" name="borrow_date" class="form-control" required>
+        <label for="borrow-date" class="form-label">Borrow date</label>
+        <input id="borrow-date" type="date" name="borrow_date" class="form-control" required>
       </div>
       <div class="col-md-2">
-        <label>Return Date</label>
-        <input type="date" name="return_date" class="form-control" required>
+        <label for="return-date" class="form-label">Return date</label>
+        <input id="return-date" type="date" name="return_date" class="form-control" required>
       </div>
       <div class="col-12 text-end">
         <button type="submit" class="btn btn-primary">Submit Request</button>
@@ -37,9 +47,19 @@
     </form>
   </div>
 </div>
+<% } %>
 
 <!-- Requests Table -->
-<table class="table table-bordered table-striped bg-white shadow-sm">
+<div class="table-card">
+  <div class="table-card-heading">
+    <div>
+      <span class="eyebrow">REQUEST HISTORY</span>
+      <h2><%= user.role === 'admin' || user.role === 'custodian' ? 'All requests' : 'Your requests' %></h2>
+    </div>
+    <span class="table-count"><%= requests.length %> requests</span>
+  </div>
+<div class="table-responsive">
+<table class="table app-table align-middle mb-0">
   <thead class="table-dark">
     <tr>
       <th>Req ID</th>
@@ -53,6 +73,11 @@
     </tr>
   </thead>
   <tbody>
+    <% if (requests.length === 0) { %>
+      <tr>
+        <td colspan="8" class="table-empty-state">No borrowing requests yet.</td>
+      </tr>
+    <% } %>
     <% requests.forEach(reqItem => { %>
       <tr>
         <td><%= reqItem.id %></td>
@@ -71,14 +96,14 @@
           </span>
         </td>
         <td>
-          <% if ((user.role === 'custodian' || user.role === 'admin') && reqItem.status === 'Pending') { %>
-            <form action="/requests/approve/<%= reqItem.id %>" method="POST" class="d-inline">
-              <button class="btn btn-sm btn-success">Approve & Release</button>
+          <% if ((user.role === 'admin' || user.role === 'custodian') && reqItem.status === 'Pending') { %>
+            <form action="/requests/release/<%= reqItem.id %>" method="POST" class="d-inline">
+              <button class="btn btn-sm btn-primary"><%= user.role === 'admin' ? 'Approve & Release' : 'Release item' %></button>
             </form>
-          <% } else if ((user.role === 'custodian' || user.role === 'admin') && reqItem.status === 'Borrowed') { %>
+          <% } else if ((user.role === 'admin' || user.role === 'custodian') && reqItem.status === 'Borrowed') { %>
             <form action="/requests/return/<%= reqItem.id %>" method="POST" class="d-inline">
               <input type="hidden" name="post_condition" value="Returned Good">
-              <button class="btn btn-sm btn-info">Record Return</button>
+              <button class="btn btn-sm btn-outline-primary">Record return</button>
             </form>
           <% } else { %>
             <small class="text-muted">None</small>
@@ -88,5 +113,7 @@
     <% }) %>
   </tbody>
 </table>
+</div>
+</div>
 
 <%- include('partials/footer') %>

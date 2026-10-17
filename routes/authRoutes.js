@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const db = require('../config/database');
 
 const router = express.Router();
+const CSPC_EMAIL_PATTERN = /^[^\s@]+@my\.cspc\.edu\.ph$/i;
 
 router.get('/login', (req, res) => {
   res.render('login', { error: null });
@@ -11,6 +12,12 @@ router.get('/login', (req, res) => {
 router.post('/login', (req, res) => {
   const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
   const password = typeof req.body.password === 'string' ? req.body.password : '';
+
+  if (!CSPC_EMAIL_PATTERN.test(email)) {
+    return res.status(400).render('login', {
+      error: 'Use your CSPC email address ending in @my.cspc.edu.ph.'
+    });
+  }
 
   db.get(
     'SELECT id, name, email, password, role FROM users WHERE email = ?',
@@ -45,9 +52,9 @@ router.post('/register', (req, res) => {
   const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
   const password = typeof req.body.password === 'string' ? req.body.password : '';
 
-  if (!name || !email || password.length < 8) {
+  if (!name || !CSPC_EMAIL_PATTERN.test(email) || password.length < 8) {
     return res.status(400).render('register', {
-      error: 'Enter your name and email, and use a password of at least 8 characters.'
+      error: 'Enter your name, use a CSPC email ending in @my.cspc.edu.ph, and choose a password of at least 8 characters.'
     });
   }
 

@@ -1,0 +1,43 @@
+<section class="dashboard-welcome">
+  <div class="dashboard-welcome-copy">
+    <span class="eyebrow">CSPC EQUIPMENT BORROWING SYSTEM</span>
+    <h1>Welcome back, <%= user.name %></h1>
+    <p>Review system-wide equipment inventory and borrowing activity.</p>
+    <span class="role-pill">Admin account</span>
+  </div>
+  <div class="dashboard-mark" aria-hidden="true">
+    <img src="/images/cspc-logo.jpg" alt="">
+  </div>
+</section>
+
+<section class="dashboard-section" aria-labelledby="quick-actions-heading">
+  <div class="section-heading">
+    <div>
+      <span class="eyebrow">ADMINISTRATION</span>
+      <h2 id="quick-actions-heading">System overview</h2>
+    </div>
+    <p>Review the equipment inventory and borrowing activity.</p>
+  </div>
+  <div class="row g-4">
+    <div class="col-md-6">
+      <a class="action-card" href="/equipment">
+        <span class="action-icon equipment-icon" aria-hidden="true">01</span>
+        <span class="action-card-copy">
+          <strong>View equipment</strong>
+          <span>Review equipment listed in the system inventory.</span>
+        </span>
+        <span class="action-arrow" aria-hidden="true">&rarr;</span>
+      </a>
+    </div>
+    <div class="col-md-6">
+      <a class="action-card" href="/requests">
+        <span class="action-icon request-icon" aria-hidden="true">02</span>
+        <span class="action-card-copy">
+          <strong>View borrowing activity</strong>
+          <span>Review equipment borrowing activity across the system.</span>
+        </span>
+        <span class="action-arrow" aria-hidden="true">&rarr;</span>
+      </a>
+    </div>
+  </div>
+</section>

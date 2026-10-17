@@ -1,20 +1,61 @@
 <%- include('partials/header') %>
 
-<div class="row">
-  <div class="col-md-12">
-    <div class="p-5 mb-4 bg-white rounded-3 shadow-sm">
-      <h1 class="display-6">Welcome, <%= user.name %>!</h1>
-      <p class="lead">Role: <span class="badge bg-info text-dark"><%= user.role.toUpperCase() %></span></p>
-      <hr>
-      <% if (error) { %>
-        <div class="alert alert-danger"><%= error %></div>
-      <% } %>
-      <div class="d-flex gap-3">
-        <a href="/equipment" class="btn btn-primary">Browse Available Equipment</a>
-        <a href="/requests" class="btn btn-secondary">Manage/View Borrowing Requests</a>
-      </div>
+<% if (error) { %>
+  <div class="alert alert-danger shadow-sm"><%= error %></div>
+<% } %>
+
+<% if (user.role === 'student') { %>
+  <%- include('dashboard-student') %>
+<% } else if (user.role === 'faculty') { %>
+  <%- include('dashboard-teacher') %>
+<% } else if (user.role === 'admin') { %>
+  <%- include('dashboard-admin') %>
+<% } else if (user.role === 'custodian') { %>
+  <%- include('dashboard-custodian') %>
+<% } else { %>
+<section class="dashboard-welcome">
+  <div class="dashboard-welcome-copy">
+    <span class="eyebrow">CSPC EQUIPMENT BORROWING SYSTEM</span>
+    <h1>Welcome back, <%= user.name %></h1>
+    <p>Your equipment, borrowing requests, and returns are all in one place.</p>
+    <span class="role-pill"><%= user.role === 'faculty' ? 'Instructor' : user.role %> account</span>
+  </div>
+  <div class="dashboard-mark" aria-hidden="true">
+    <img src="/images/cspc-logo.jpg" alt="">
+  </div>
+</section>
+
+<section class="dashboard-section" aria-labelledby="quick-actions-heading">
+  <div class="section-heading">
+    <div>
+      <span class="eyebrow">GET STARTED</span>
+      <h2 id="quick-actions-heading">What would you like to do?</h2>
+    </div>
+    <p>Choose a section to continue.</p>
+  </div>
+  <div class="row g-4">
+    <div class="col-md-6">
+      <a class="action-card" href="/equipment">
+        <span class="action-icon equipment-icon" aria-hidden="true">01</span>
+        <span class="action-card-copy">
+          <strong>Browse equipment</strong>
+          <span>View the inventory and check what is available.</span>
+        </span>
+        <span class="action-arrow" aria-hidden="true">&rarr;</span>
+      </a>
+    </div>
+    <div class="col-md-6">
+      <a class="action-card" href="/requests">
+        <span class="action-icon request-icon" aria-hidden="true">02</span>
+        <span class="action-card-copy">
+          <strong><%= user.role === 'admin' ? 'View borrowing activity' : user.role === 'custodian' ? 'Manage borrowing requests' : 'My borrowing requests' %></strong>
+          <span><%= user.role === 'admin' ? 'Review equipment borrowing activity across the system.' : user.role === 'custodian' ? 'Release equipment and record returned items.' : 'Submit and follow the status of your requests.' %></span>
+        </span>
+        <span class="action-arrow" aria-hidden="true">&rarr;</span>
+      </a>
     </div>
   </div>
-</div>
+</section>
+<% } %>
 
 <%- include('partials/footer') %>

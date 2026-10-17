@@ -1,30 +1,58 @@
 <%- include('partials/header') %>
 
-<h2>Equipment Inventory</h2>
+<section class="page-heading">
+  <span class="eyebrow">INVENTORY</span>
+  <h1>Equipment</h1>
+  <p>Browse items and see what is currently available to borrow.</p>
+</section>
+
+<% if (error) { %>
+  <div class="alert alert-danger shadow-sm" role="alert"><%= error %></div>
+<% } %>
+<% if (success) { %>
+  <div class="alert alert-success shadow-sm" role="status"><%= success %></div>
+<% } %>
 
 <% if (user.role === 'admin' || user.role === 'custodian') { %>
-  <div class="card mb-4">
-    <div class="card-header fw-bold">Add New Equipment</div>
+  <div class="card app-card mb-4">
+    <div class="card-header app-card-header">
+      <div>
+        <span class="eyebrow">INVENTORY MANAGEMENT</span>
+        <h2>Add equipment</h2>
+      </div>
+    </div>
     <div class="card-body">
       <form action="/equipment/add" method="POST" class="row g-3">
         <div class="col-md-3">
-          <input type="text" name="name" class="form-control" placeholder="Item Name" required>
+          <label for="equipment-name" class="visually-hidden">Item name</label>
+          <input id="equipment-name" type="text" name="name" class="form-control" placeholder="Item name" required>
         </div>
         <div class="col-md-3">
-          <input type="text" name="category" class="form-control" placeholder="Category" required>
+          <label for="equipment-category" class="visually-hidden">Category</label>
+          <input id="equipment-category" type="text" name="category" class="form-control" placeholder="Category" required>
         </div>
         <div class="col-md-3">
-          <input type="number" name="total_qty" class="form-control" placeholder="Quantity" required>
+          <label for="equipment-quantity" class="visually-hidden">Quantity</label>
+          <input id="equipment-quantity" type="number" name="total_qty" min="1" class="form-control" placeholder="Quantity" required>
         </div>
         <div class="col-md-3">
-          <button type="submit" class="btn btn-success w-100">Add Item</button>
+          <button type="submit" class="btn btn-primary w-100">Add item</button>
         </div>
       </form>
     </div>
   </div>
 <% } %>
 
-<table class="table table-bordered table-striped bg-white shadow-sm">
+<div class="table-card">
+  <div class="table-card-heading">
+    <div>
+      <span class="eyebrow">STOCK OVERVIEW</span>
+      <h2>Equipment inventory</h2>
+    </div>
+    <span class="table-count"><%= equipment.length %> items</span>
+  </div>
+<div class="table-responsive">
+<table class="table app-table align-middle mb-0">
   <thead class="table-dark">
     <tr>
       <th>ID</th>
@@ -33,9 +61,17 @@
       <th>Total Quantity</th>
       <th>Available Quantity</th>
       <th>Condition</th>
+      <% if (user.role === 'admin') { %>
+        <th>Actions</th>
+      <% } %>
     </tr>
   </thead>
   <tbody>
+    <% if (equipment.length === 0) { %>
+      <tr>
+        <td colspan="<%= user.role === 'admin' ? 7 : 6 %>" class="table-empty-state">No equipment has been added yet.</td>
+      </tr>
+    <% } %>
     <% equipment.forEach(item => { %>
       <tr>
         <td><%= item.id %></td>
@@ -43,14 +79,23 @@
         <td><%= item.category %></td>
         <td><%= item.total_qty %></td>
         <td>
-          <span class="badge <%= item.available_qty > 0 ? 'bg-success' : 'bg-danger' %>">
+          <span class="availability-pill <%= item.available_qty > 0 ? 'is-available' : 'is-unavailable' %>">
             <%= item.available_qty %>
           </span>
         </td>
         <td><%= item.condition %></td>
+        <% if (user.role === 'admin') { %>
+          <td>
+            <form action="/equipment/delete/<%= item.id %>" method="POST" onsubmit="return confirm('Delete this equipment item?');">
+              <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
+            </form>
+          </td>
+        <% } %>
       </tr>
     <% }) %>
   </tbody>
 </table>
+</div>
+</div>
 
 <%- include('partials/footer') %>
