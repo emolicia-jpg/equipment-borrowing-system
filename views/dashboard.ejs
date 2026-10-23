@@ -12,6 +12,10 @@
   <%- include('dashboard-admin') %>
 <% } else if (user.role === 'custodian') { %>
   <%- include('dashboard-custodian') %>
+<% } else if (user.role === 'dean') { %>
+  <%- include('dashboard-dean') %>
+<% } else if (user.role === 'department_admin') { %>
+  <%- include('dashboard-department-admin') %>
 <% } else { %>
 <section class="dashboard-welcome">
   <div class="dashboard-welcome-copy">

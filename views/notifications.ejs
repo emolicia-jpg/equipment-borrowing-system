@@ -1,0 +1,42 @@
+<%- include('partials/header') %>
+
+<section class="page-heading">
+  <span class="eyebrow">YOUR UPDATES</span>
+  <h1>Notifications</h1>
+  <p>See request status updates and reminders for equipment return dates.</p>
+</section>
+
+<section class="table-card">
+  <div class="table-card-heading">
+    <div><span class="eyebrow">RECENT ACTIVITY</span><h2>Your notifications</h2></div>
+    <form action="/notifications/read-all" method="POST">
+      <button type="submit" class="btn btn-outline-primary btn-sm">Mark all as read</button>
+    </form>
+  </div>
+  <div class="table-responsive">
+    <table class="table app-table notification-table align-middle mb-0">
+      <thead class="table-dark"><tr><th scope="col">Update</th><th scope="col">When (Philippine time)</th><th scope="col">Request</th><th scope="col">Action</th></tr></thead>
+      <tbody>
+        <% if (!notifications.length) { %>
+          <tr><td colspan="4" class="table-empty-state">You have no notifications yet.</td></tr>
+        <% } %>
+        <% notifications.forEach(notification => { %>
+          <tr class="<%= notification.read_at ? '' : 'notification-unread' %>">
+            <td><%= notification.message %></td>
+            <td><%= notification.created_at %></td>
+            <td><%= notification.request_id ? '#' + notification.request_id : '—' %></td>
+            <td>
+              <% if (!notification.read_at) { %>
+                <form action="/notifications/<%= notification.id %>/read" method="POST">
+                  <button type="submit" class="btn btn-outline-primary btn-sm">Mark read</button>
+                </form>
+              <% } else { %><span class="text-muted">Read</span><% } %>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,83 @@
+<%- include('partials/header') %>
+
+<section class="page-heading">
+  <span class="eyebrow">SYSTEM ADMINISTRATION</span>
+  <h1>Departments and accounts</h1>
+  <p>Provision department staff and manage college units. Student borrowing requests do not require dean approval.</p>
+</section>
+
+<% if (status) { %>
+  <div class="alert alert-success" role="status">
+    <%= status === 'department-created' ? 'Department created.' : status === 'department-updated' ? 'Department updated.' : status === 'user-created' ? 'Staff account created.' : status === 'history-deleted' ? 'History entry deleted. The deletion was recorded.' : status %>
+  </div>
+<% } %>
+
+<section class="admin-grid">
+  <div class="card app-card">
+    <div class="card-header app-card-header"><div><h2>Add a department</h2><p class="text-muted mb-0">Create a college unit so staff and equipment can be assigned to it.</p></div></div>
+    <div class="card-body">
+      <form action="/admin/departments" method="POST" class="row g-3">
+        <div class="col-sm-4"><label class="form-label" for="department-code">Code</label><input id="department-code" name="code" class="form-control" maxlength="20" required></div>
+        <div class="col-sm-8"><label class="form-label" for="department-name">Name</label><input id="department-name" name="name" class="form-control" maxlength="120" required></div>
+        <div class="col-12"><button class="btn btn-primary">Add department</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card app-card">
+    <div class="card-header app-card-header"><h2>Provision staff account</h2></div>
+    <div class="card-body">
+      <form action="/admin/users" method="POST" class="row g-3">
+        <div class="col-md-6"><label class="form-label" for="staff-name">Full name</label><input id="staff-name" name="name" class="form-control" maxlength="120" required></div>
+        <div class="col-md-6"><label class="form-label" for="staff-email">CSPC email</label><input id="staff-email" name="email" type="email" class="form-control" pattern="^[^\s@]+@my\.cspc\.edu\.ph$" required></div>
+        <div class="col-md-4"><label class="form-label" for="staff-password">Initial password</label><div class="input-group password-toggle"><input id="staff-password" name="password" type="password" class="form-control" minlength="8" autocomplete="new-password" required><button class="btn btn-outline-secondary password-toggle-button" type="button" aria-label="Show password" aria-pressed="false" aria-controls="staff-password" title="Show password"><svg class="password-eye" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg><svg class="password-eye-off" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="m3 3 18 18M10.6 10.6a2 2 0 0 0 2.8 2.8"/><path d="M9.9 5.2A10.8 10.8 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.1 3.9M6.2 6.2C3.5 8 2 12 2 12s3.6 7 10 7a10 10 0 0 0 3-.5"/></svg></button></div></div>
+        <div class="col-md-4">
+          <label class="form-label" for="staff-role">Role</label>
+          <select id="staff-role" name="role" class="form-select" required>
+            <option value="department_admin">Department Admin</option><option value="custodian">Custodian</option><option value="dean">Dean</option>
+            <option value="faculty">Faculty</option><option value="coordinator">Coordinator</option>
+            <option value="property">Property</option><option value="security">Security</option>
+          </select>
+        </div>
+        <div class="col-md-4"><label class="form-label" for="staff-department">Department</label><select id="staff-department" name="department_id" class="form-select" required><% departments.forEach(department => { %><option value="<%= department.id %>"><%= department.code %></option><% }) %></select></div>
+        <div class="col-12"><button class="btn btn-primary">Create account</button></div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<section class="table-card mt-4">
+  <div class="table-card-heading"><div><span class="eyebrow">COLLEGE UNITS</span><h2>Departments</h2><p class="text-muted mb-0">Edit the department code or name, then select Save. These labels appear across the system.</p></div><span class="table-count"><%= departments.length %> departments</span></div>
+  <div class="table-responsive"><table class="table app-table align-middle mb-0">
+    <thead class="table-dark"><tr><th>Code</th><th>Name</th><th>Action</th></tr></thead>
+    <tbody><% if (!departments.length) { %><tr><td colspan="3" class="table-empty-state">No departments found.</td></tr><% } %>
+      <% departments.forEach(department => { %><tr>
+        <td><input form="department-form-<%= department.id %>" name="code" class="form-control" value="<%= department.code %>" maxlength="20" required></td>
+        <td><input form="department-form-<%= department.id %>" name="name" class="form-control" value="<%= department.name %>" maxlength="120" required></td>
+        <td><form id="department-form-<%= department.id %>" action="/admin/departments/<%= department.id %>" method="POST"></form><button form="department-form-<%= department.id %>" class="btn btn-outline-primary btn-sm">Save</button></td>
+      </tr><% }) %>
+    </tbody>
+  </table></div>
+</section>
+
+<section class="table-card mt-4">
+  <div class="table-card-heading"><div><span class="eyebrow">ACCOUNT PROVISIONING</span><h2>System accounts</h2></div><span class="table-count"><%= users.length %> accounts</span></div>
+  <div class="table-responsive"><table class="table app-table align-middle mb-0">
+    <thead class="table-dark"><tr><th>Name</th><th>Email</th><th>Role</th><th>Department</th></tr></thead>
+    <tbody><% if (!users.length) { %><tr><td colspan="4" class="table-empty-state">No accounts found.</td></tr><% } %>
+      <% users.forEach(account => { %><tr><td><%= account.name %></td><td><%= account.email %></td><td><%= account.role.replace(/_/g, ' ') %></td><td><%= account.department_code %></td></tr><% }) %>
+    </tbody>
+  </table></div>
+</section>
+
+<section class="table-card mt-4">
+  <div class="table-card-heading"><div><span class="eyebrow">GLOBAL AUDIT</span><h2>Recent system activity</h2><p class="text-muted mb-0">Times are shown in Philippine Standard Time (PHT). Deleting a row also creates a deletion record.</p></div><span class="table-count">Latest 100 entries</span></div>
+  <div class="table-responsive"><table class="table app-table audit-table align-middle mb-0">
+    <thead class="table-dark"><tr><th>When</th><th>Actor</th><th>Department</th><th>Action</th><th>Record</th><th>Details</th><th>Manage</th></tr></thead>
+    <tbody><% if (!auditLogs.length) { %><tr><td colspan="7" class="table-empty-state">No audit events recorded.</td></tr><% } %>
+      <% auditLogs.forEach(entry => { %><tr><td><time datetime="<%= entry.isoTime %>"><%= entry.formattedTime %></time></td><td><%= entry.actor_name || 'Account unavailable' %> (<%= entry.actor_role %>)</td><td><%= entry.department_code || '—' %></td><td><%= entry.action %></td><td><%= entry.entity_type %> #<%= entry.entity_id || '—' %></td><td class="audit-details"><%= entry.formattedDetails %></td><td><form action="/admin/audit/<%= entry.id %>/delete" method="POST" onsubmit="return confirm('Permanently delete this history entry? A deletion record will be added to the audit history.');"><button type="submit" class="btn btn-outline-danger btn-sm">Delete</button></form></td></tr><% }) %>
+    </tbody>
+  </table></div>
+</section>
+
+<%- include('partials/footer') %>

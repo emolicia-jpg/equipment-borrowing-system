@@ -2,26 +2,25 @@
 
 <section class="page-heading">
   <span class="eyebrow">BORROWING ACTIVITY</span>
-  <h1>Requests</h1>
-  <p><%= user.role === 'custodian' ? 'Release equipment to borrowers and record items when they are returned.' : user.role === 'admin' ? 'Review borrowing activity across the system.' : 'Submit an equipment request and keep track of its status.' %></p>
+  <h1><%= user.role === 'student' || user.role === 'faculty' ? 'My Request' : 'Requests' %></h1>
+  <p><%= user.role === 'custodian' || user.role === 'department_admin' ? 'Review requests for your department, release equipment, and record returns.' : user.role === 'admin' ? 'Review borrowing activity across the system.' : user.role === 'dean' ? 'Read-only borrowing activity for ' + user.departmentName + '.' : 'Submit an equipment request and keep track of its status.' %></p>
 </section>
 
-<% if (user.role !== 'admin') { %>
-<!-- Submit Request Form -->
+<% if (error) { %><div class="alert alert-info" role="status"><%= error %></div><% } %>
+
+<% if (user.role === 'student' || user.role === 'faculty') { %>
 <div class="card app-card mb-4">
   <div class="card-header app-card-header">
-    <div>
-      <span class="eyebrow">NEW REQUEST</span>
-      <h2>Request equipment</h2>
-    </div>
+    <div><span class="eyebrow">NEW REQUEST</span><h2>Request equipment</h2></div>
   </div>
   <div class="card-body">
-    <form action="/requests/submit" method="POST" class="row g-3">
-      <div class="col-md-3">
+    <form action="/requests/submit" method="POST" class="row g-3 schedule-form" id="borrow-request-form">
+      <div class="col-md-4">
         <label for="request-equipment" class="form-label">Equipment</label>
         <select id="request-equipment" name="equipment_id" class="form-select" required>
+          <option value="" selected disabled>Choose equipment</option>
           <% equipmentList.forEach(item => { %>
-            <option value="<%= item.id %>"><%= item.name %> (Available: <%= item.available_qty %>)</option>
+            <option value="<%= item.id %>" data-available="<%= item.available_qty %>"><%= item.name %> (currently available: <%= item.available_qty %>)</option>
           <% }) %>
         </select>
       </div>
@@ -29,91 +28,196 @@
         <label for="request-quantity" class="form-label">Quantity</label>
         <input id="request-quantity" type="number" name="quantity" min="1" value="1" class="form-control" required>
       </div>
-      <div class="col-md-3">
+      <div class="col-md-6">
         <label for="request-purpose" class="form-label">Purpose</label>
-        <input id="request-purpose" type="text" name="purpose" class="form-control" placeholder="What will you use it for?" required>
+        <input id="request-purpose" type="text" name="purpose" maxlength="500" class="form-control" placeholder="What will you use it for?" required>
       </div>
-      <div class="col-md-2">
-        <label for="borrow-date" class="form-label">Borrow date</label>
-        <input id="borrow-date" type="date" name="borrow_date" class="form-control" required>
+      <div class="col-md-3">
+        <label for="borrow-datetime" class="form-label">Borrow date and time</label>
+        <input id="borrow-datetime" type="datetime-local" name="borrow_datetime" min="<%= todayDate %>" class="form-control" required>
       </div>
-      <div class="col-md-2">
-        <label for="return-date" class="form-label">Return date</label>
-        <input id="return-date" type="date" name="return_date" class="form-control" required>
+      <div class="col-md-3">
+        <label for="return-datetime" class="form-label">Return date and time</label>
+        <input id="return-datetime" type="datetime-local" name="return_datetime" min="<%= todayDate %>" class="form-control" required>
       </div>
-      <div class="col-12 text-end">
-        <button type="submit" class="btn btn-primary">Submit Request</button>
+      <div class="col-md-6 d-flex align-items-end justify-content-between gap-3">
+        <p id="availability-message" class="small text-muted mb-2" role="status" aria-live="polite">Choose a schedule to check availability for those dates.</p>
+        <button id="submit-request" type="submit" class="btn btn-primary flex-shrink-0" disabled>Submit Request</button>
       </div>
+      <% if (!equipmentList.length) { %>
+        <div class="col-12"><p class="text-muted mb-0">There is no equipment in your department to request right now.</p></div>
+      <% } %>
     </form>
   </div>
 </div>
 <% } %>
 
-<!-- Requests Table -->
 <div class="table-card">
   <div class="table-card-heading">
     <div>
       <span class="eyebrow">REQUEST HISTORY</span>
-      <h2><%= user.role === 'admin' || user.role === 'custodian' ? 'All requests' : 'Your requests' %></h2>
+      <h2><%= user.role === 'admin' ? 'All requests' : user.role === 'custodian' || user.role === 'department_admin' || user.role === 'dean' || user.role === 'coordinator' ? 'Department requests' : 'Your requests' %></h2>
     </div>
     <span class="table-count"><%= requests.length %> requests</span>
   </div>
-<div class="table-responsive">
-<table class="table app-table align-middle mb-0">
-  <thead class="table-dark">
-    <tr>
-      <th>Req ID</th>
-      <th>Borrower</th>
-      <th>Equipment</th>
-      <th>Qty</th>
-      <th>Purpose</th>
-      <th>Borrow / Return Date</th>
-      <th>Status</th>
-      <th>Action</th>
-    </tr>
-  </thead>
-  <tbody>
-    <% if (requests.length === 0) { %>
-      <tr>
-        <td colspan="8" class="table-empty-state">No borrowing requests yet.</td>
-      </tr>
-    <% } %>
-    <% requests.forEach(reqItem => { %>
-      <tr>
-        <td><%= reqItem.id %></td>
-        <td><%= reqItem.borrower_name %></td>
-        <td><%= reqItem.equipment_name %></td>
-        <td><%= reqItem.quantity %></td>
-        <td><%= reqItem.purpose %></td>
-        <td><%= reqItem.borrow_date %> to <%= reqItem.return_date %></td>
-        <td>
-          <span class="badge 
-            <%= reqItem.status === 'Approved' || reqItem.status === 'Borrowed' ? 'bg-primary' : '' %>
-            <%= reqItem.status === 'Returned' ? 'bg-success' : '' %>
-            <%= reqItem.status === 'Pending' ? 'bg-warning text-dark' : '' %>
-            <%= reqItem.status === 'Denied' ? 'bg-danger' : '' %>">
-            <%= reqItem.status %>
-          </span>
-        </td>
-        <td>
-          <% if ((user.role === 'admin' || user.role === 'custodian') && reqItem.status === 'Pending') { %>
-            <form action="/requests/release/<%= reqItem.id %>" method="POST" class="d-inline">
-              <button class="btn btn-sm btn-primary"><%= user.role === 'admin' ? 'Approve & Release' : 'Release item' %></button>
-            </form>
-          <% } else if ((user.role === 'admin' || user.role === 'custodian') && reqItem.status === 'Borrowed') { %>
-            <form action="/requests/return/<%= reqItem.id %>" method="POST" class="d-inline">
-              <input type="hidden" name="post_condition" value="Returned Good">
-              <button class="btn btn-sm btn-outline-primary">Record return</button>
-            </form>
-          <% } else { %>
-            <small class="text-muted">None</small>
-          <% } %>
-        </td>
-      </tr>
-    <% }) %>
-  </tbody>
-</table>
+  <div class="table-responsive">
+    <table class="table app-table requests-table align-middle mb-0">
+      <thead class="table-dark">
+        <tr><th scope="col">Req ID</th><th scope="col">Borrower</th><th scope="col">Equipment</th><th scope="col">Qty</th><th scope="col">Purpose</th><th scope="col">Borrow / Return</th><th scope="col">Status</th><th scope="col">Action</th></tr>
+      </thead>
+      <tbody>
+        <% if (!requests.length) { %>
+          <tr><td colspan="8" class="table-empty-state"><%= user.role === 'custodian' || user.role === 'department_admin' || user.role === 'coordinator' ? 'No requests found for ' + (user.departmentName || 'your department') + '.' : user.role === 'dean' ? 'No borrowing requests found for ' + (user.departmentName || 'your department') + '.' : user.role === 'student' || user.role === 'faculty' ? 'You have no borrowing requests yet.' : 'No borrowing requests found.' %></td></tr>
+        <% } %>
+        <% requests.forEach(reqItem => { %>
+          <tr id="request-<%= reqItem.id %>">
+            <td><%= reqItem.id %></td>
+            <td><%= reqItem.borrower_name %></td>
+            <td><%= reqItem.equipment_name %></td>
+            <td><%= reqItem.quantity %></td>
+            <td><%= reqItem.purpose %></td>
+            <td><%= reqItem.borrow_date %> to <%= reqItem.return_date %></td>
+            <td>
+              <span class="badge <%= reqItem.is_overdue ? 'bg-danger' : '' %> <%= !reqItem.is_overdue && (reqItem.status === 'Approved' || reqItem.status === 'Borrowed') ? 'bg-primary' : '' %> <%= reqItem.status === 'Returned' ? 'bg-success' : '' %> <%= reqItem.status === 'Pending' || reqItem.status === 'Correction Required' ? 'bg-warning text-dark' : '' %> <%= reqItem.status === 'Rejected' || reqItem.status === 'Denied' ? 'bg-danger' : '' %>">
+                <%= reqItem.is_overdue ? 'Overdue' : reqItem.status === 'Denied' ? 'Rejected' : reqItem.status %>
+              </span>
+              <% if (reqItem.decision_note) { %><br><small class="text-muted"><%= reqItem.decision_note %></small><% } %>
+              <% if (reqItem.pre_condition) { %><br><small class="text-muted">Release: <%= reqItem.pre_condition %></small><% } %>
+              <% if (reqItem.post_condition) { %><br><small class="text-muted">Return: <%= reqItem.post_condition %></small><% } %>
+            </td>
+            <td>
+              <% if ((user.role === 'admin' || user.role === 'department_admin' || user.role === 'custodian') && reqItem.status === 'Pending') { %>
+                <div class="table-actions">
+                  <form action="/requests/release/<%= reqItem.id %>" method="POST"><button class="btn btn-sm btn-primary">Approve &amp; release</button></form>
+                  <details>
+                    <summary class="btn btn-sm btn-outline-danger">Reject</summary>
+                    <form action="/requests/reject/<%= reqItem.id %>" method="POST" class="mt-2">
+                      <label class="visually-hidden" for="reject-reason-<%= reqItem.id %>">Reason for rejection</label>
+                      <input id="reject-reason-<%= reqItem.id %>" name="reason" class="form-control form-control-sm mb-2" maxlength="500" placeholder="Reason" required>
+                      <button class="btn btn-sm btn-danger">Confirm rejection</button>
+                    </form>
+                  </details>
+                  <details>
+                    <summary class="btn btn-sm btn-outline-secondary">Return for correction</summary>
+                    <form action="/requests/return-for-correction/<%= reqItem.id %>" method="POST" class="mt-2">
+                      <label class="visually-hidden" for="correction-reason-<%= reqItem.id %>">Correction reason</label>
+                      <input id="correction-reason-<%= reqItem.id %>" name="reason" class="form-control form-control-sm mb-2" maxlength="500" placeholder="What should be corrected?" required>
+                      <button class="btn btn-sm btn-secondary">Send correction request</button>
+                    </form>
+                  </details>
+                </div>
+              <% } else if (user.role === 'coordinator' && reqItem.status === 'Pending') { %>
+                <details>
+                  <summary class="btn btn-sm btn-outline-secondary">Return for correction</summary>
+                  <form action="/requests/return-for-correction/<%= reqItem.id %>" method="POST" class="mt-2">
+                    <label class="visually-hidden" for="coordinator-correction-<%= reqItem.id %>">Correction reason</label>
+                    <input id="coordinator-correction-<%= reqItem.id %>" name="reason" class="form-control form-control-sm mb-2" maxlength="500" placeholder="What should be corrected?" required>
+                    <button class="btn btn-sm btn-secondary">Send correction request</button>
+                  </form>
+                </details>
+              <% } else if ((user.role === 'admin' || user.role === 'department_admin' || user.role === 'custodian') && reqItem.status === 'Borrowed') { %>
+                <form action="/requests/return/<%= reqItem.id %>" method="POST" class="table-actions">
+                  <select name="post_condition" class="form-select form-select-sm" aria-label="Return condition for request <%= reqItem.id %>">
+                    <option value="Returned Good">Good</option><option value="Returned Damaged">Damaged</option><option value="Returned Lost">Lost</option>
+                  </select>
+                  <button class="btn btn-sm btn-outline-primary">Record return</button>
+                </form>
+              <% } else if ((user.role === 'student' || user.role === 'faculty') && reqItem.status === 'Correction Required') { %>
+                <details>
+                  <summary class="btn btn-sm btn-primary">Update request</summary>
+                  <form action="/requests/resubmit/<%= reqItem.id %>" method="POST" class="row g-2 mt-2 schedule-form">
+                    <div class="col-12"><label class="form-label" for="corrected-purpose-<%= reqItem.id %>">Purpose</label><input id="corrected-purpose-<%= reqItem.id %>" name="purpose" class="form-control form-control-sm" maxlength="500" value="<%= reqItem.purpose %>" required></div>
+                    <div class="col-12"><label class="form-label" for="corrected-quantity-<%= reqItem.id %>">Quantity</label><input id="corrected-quantity-<%= reqItem.id %>" name="quantity" type="number" min="1" value="<%= reqItem.quantity %>" class="form-control form-control-sm" required></div>
+                    <div class="col-12"><label class="form-label" for="corrected-borrow-<%= reqItem.id %>">Borrow date and time</label><input id="corrected-borrow-<%= reqItem.id %>" name="borrow_datetime" type="datetime-local" min="<%= todayDate %>" value="<%= reqItem.borrow_datetime %>" class="form-control form-control-sm" required></div>
+                    <div class="col-12"><label class="form-label" for="corrected-return-<%= reqItem.id %>">Return date and time</label><input id="corrected-return-<%= reqItem.id %>" name="return_datetime" type="datetime-local" min="<%= todayDate %>" value="<%= reqItem.return_datetime %>" class="form-control form-control-sm" required></div>
+                    <div class="col-12"><button class="btn btn-sm btn-primary">Resubmit request</button></div>
+                  </form>
+                </details>
+              <% } else { %>
+                <small class="text-muted">None</small>
+              <% } %>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
 </div>
-</div>
+
+<script>
+  const requestForm = document.getElementById('borrow-request-form');
+  if (requestForm) {
+    const borrowDateTime = document.getElementById('borrow-datetime');
+    const returnDateTime = document.getElementById('return-datetime');
+    const equipmentSelect = document.getElementById('request-equipment');
+    const quantityInput = document.getElementById('request-quantity');
+    const availabilityMessage = document.getElementById('availability-message');
+    const submitButton = document.getElementById('submit-request');
+
+    function updateQuantityLimit() {
+      const selected = equipmentSelect.selectedOptions[0];
+      const available = selected ? Number(selected.dataset.available || 0) : 0;
+      quantityInput.max = available || '';
+      if (available && Number(quantityInput.value) > available) quantityInput.value = available;
+      submitButton.disabled = !available;
+    }
+
+    async function refreshScheduleAvailability() {
+      if (!borrowDateTime.value || !returnDateTime.value || borrowDateTime.value > returnDateTime.value) {
+        availabilityMessage.textContent = 'Choose a valid schedule to check equipment availability.';
+        submitButton.disabled = true;
+        return;
+      }
+      try {
+        const query = new URLSearchParams({ start_datetime: borrowDateTime.value, due_datetime: returnDateTime.value });
+        const response = await fetch(`/equipment/availability?${query.toString()}`, { headers: { Accept: 'application/json' } });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.message || 'Unable to check schedule availability.');
+
+        const selectedId = equipmentSelect.value;
+        equipmentSelect.replaceChildren(new Option('Choose available equipment', ''));
+        payload.forEach(item => {
+          const option = new Option(`${item.name} (available for these dates: ${item.available_qty})`, item.id);
+          option.dataset.available = item.available_qty;
+          equipmentSelect.add(option);
+        });
+        equipmentSelect.value = payload.some(item => String(item.id) === selectedId) ? selectedId : '';
+        availabilityMessage.textContent = payload.length
+          ? 'Availability is based on requests that overlap your selected schedule.'
+          : 'No equipment is available for the full selected schedule.';
+        updateQuantityLimit();
+      } catch (error) {
+        availabilityMessage.textContent = error.message;
+        submitButton.disabled = true;
+      }
+    }
+
+    borrowDateTime.addEventListener('change', () => {
+      returnDateTime.min = borrowDateTime.value || returnDateTime.min;
+      if (returnDateTime.value && returnDateTime.value < returnDateTime.min) returnDateTime.value = returnDateTime.min;
+      refreshScheduleAvailability();
+    });
+    returnDateTime.addEventListener('change', refreshScheduleAvailability);
+    equipmentSelect.addEventListener('change', updateQuantityLimit);
+    quantityInput.addEventListener('input', updateQuantityLimit);
+    requestForm.addEventListener('submit', event => {
+      const selected = equipmentSelect.selectedOptions[0];
+      if (!selected || Number(quantityInput.value) > Number(selected.dataset.available || 0)) {
+        event.preventDefault();
+        availabilityMessage.textContent = 'Choose an available quantity for the selected schedule.';
+      }
+    });
+  }
+
+  document.querySelectorAll('.schedule-form:not(#borrow-request-form)').forEach(form => {
+    const borrow = form.querySelector('[name="borrow_datetime"]');
+    const due = form.querySelector('[name="return_datetime"]');
+    if (!borrow || !due) return;
+    borrow.addEventListener('change', () => {
+      due.min = borrow.value || due.min;
+      if (due.value && due.value < due.min) due.value = due.min;
+    });
+  });
+</script>
 
 <%- include('partials/footer') %>

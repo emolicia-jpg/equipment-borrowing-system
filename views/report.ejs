@@ -1,0 +1,30 @@
+<%- include('partials/header') %>
+
+<section class="page-heading">
+  <span class="eyebrow">ASSET REPORT</span>
+  <h1>Report preview</h1>
+  <p>Review current loans, overdue items, borrowing history, utilization, and equipment condition<%= user.role === 'admin' ? ' across all departments' : ' for ' + user.departmentName %> before downloading.</p>
+</section>
+
+<section class="table-card">
+  <div class="table-card-heading">
+    <div><span class="eyebrow">REPORT CONTENTS</span><h2>Loans, history, utilization, and condition</h2></div>
+    <div class="d-flex flex-wrap align-items-center gap-2">
+      <span class="table-count"><%= records.length %> records</span>
+      <a class="btn btn-primary btn-sm" href="/reports.csv">Download CSV</a>
+    </div>
+  </div>
+  <div class="table-responsive">
+    <table class="table app-table align-middle mb-0">
+      <thead class="table-dark"><tr><% columns.forEach(column => { %><th scope="col"><%= column %></th><% }) %></tr></thead>
+      <tbody>
+        <% if (!records.length) { %>
+          <tr><td colspan="<%= columns.length %>" class="table-empty-state">No report records currently match these conditions.</td></tr>
+        <% } %>
+        <% records.forEach(record => { %><tr><% record.forEach(value => { %><td><%= value == null ? '—' : value %></td><% }) %></tr><% }) %>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

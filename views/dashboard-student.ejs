@@ -1,8 +1,48 @@
+<% if (overdueItems && overdueItems.length > 0) { %>
+  <section class="overdue-alert" role="alert" aria-labelledby="overdue-alert-heading">
+    <div class="overdue-alert-copy">
+      <span class="overdue-alert-eyebrow">RETURN REMINDER</span>
+      <h2 id="overdue-alert-heading">Time to return your gear</h2>
+      <p>You have <%= overdueItems.length %> overdue <%= overdueItems.length === 1 ? 'request' : 'requests' %>. Please return the equipment as soon as possible.</p>
+      <ul>
+        <% overdueItems.forEach(item => { %>
+          <li>
+            <strong><%= item.equipment_name %></strong>
+            <% if (item.quantity > 1) { %>(Qty: <%= item.quantity %>)<% } %>
+            &mdash; overdue since <%= item.due_date %>
+          </li>
+        <% }) %>
+      </ul>
+    </div>
+    <a class="btn btn-warning overdue-alert-action" href="/requests">See Overdue Items</a>
+  </section>
+<% } %>
+
+<% if (activeItems && activeItems.length > 0) { %>
+  <section class="table-card mb-4" aria-labelledby="active-borrowings-heading">
+    <div class="table-card-heading">
+      <div>
+        <span class="eyebrow">DUE DATE REMINDERS</span>
+        <h2 id="active-borrowings-heading">Your active borrowings</h2>
+      </div>
+      <a class="btn btn-outline-primary btn-sm" href="/requests">View requests</a>
+    </div>
+    <div class="table-responsive">
+      <table class="table app-table align-middle mb-0">
+        <thead class="table-dark"><tr><th>Equipment</th><th>Quantity</th><th>Return by</th></tr></thead>
+        <tbody><% activeItems.forEach(item => { %>
+          <tr><td><%= item.equipment_name %></td><td><%= item.quantity %></td><td><%= item.due_date %></td></tr>
+        <% }) %></tbody>
+      </table>
+    </div>
+  </section>
+<% } %>
+
 <section class="dashboard-welcome">
   <div class="dashboard-welcome-copy">
     <span class="eyebrow">CSPC EQUIPMENT BORROWING SYSTEM</span>
     <h1>Welcome back, <%= user.name %></h1>
-    <p>Browse available equipment and keep track of your borrowing requests.</p>
+    <p> Browse available equipment or instantly check your active borrow requests below.</p>
     <span class="role-pill">Student account</span>
   </div>
   <div class="dashboard-mark" aria-hidden="true">
@@ -19,22 +59,32 @@
     <p>Browse equipment or follow your requests.</p>
   </div>
   <div class="row g-4">
-    <div class="col-md-6">
+    <div class="col-md-6 col-lg-4">
       <a class="action-card" href="/equipment">
         <span class="action-icon equipment-icon" aria-hidden="true">01</span>
         <span class="action-card-copy">
-          <strong>Browse equipment</strong>
+          <strong>Browse Equipment</strong>
           <span>Check the inventory and see what is available to borrow.</span>
         </span>
         <span class="action-arrow" aria-hidden="true">&rarr;</span>
       </a>
     </div>
-    <div class="col-md-6">
+    <div class="col-md-6 col-lg-4">
       <a class="action-card" href="/requests">
         <span class="action-icon request-icon" aria-hidden="true">02</span>
         <span class="action-card-copy">
-          <strong>My borrowing requests</strong>
+          <strong>My Request</strong>
           <span>Submit a request and follow its status.</span>
+        </span>
+        <span class="action-arrow" aria-hidden="true">&rarr;</span>
+      </a>
+    </div>
+    <div class="col-md-6 col-lg-4">
+      <a class="action-card" href="/notifications">
+        <span class="action-icon request-icon" aria-hidden="true">03</span>
+        <span class="action-card-copy">
+          <strong>Notifications</strong>
+          <span>Check request updates and return-date reminders.</span>
         </span>
         <span class="action-arrow" aria-hidden="true">&rarr;</span>
       </a>

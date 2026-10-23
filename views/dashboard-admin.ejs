@@ -2,7 +2,7 @@
   <div class="dashboard-welcome-copy">
     <span class="eyebrow">CSPC EQUIPMENT BORROWING SYSTEM</span>
     <h1>Welcome back, <%= user.name %></h1>
-    <p>Review system-wide equipment inventory and borrowing activity.</p>
+    <p>Manage departments and staff accounts, and review system-wide asset activity.</p>
     <span class="role-pill">Admin account</span>
   </div>
   <div class="dashboard-mark" aria-hidden="true">
@@ -20,6 +20,16 @@
   </div>
   <div class="row g-4">
     <div class="col-md-6">
+      <a class="action-card" href="/admin">
+        <span class="action-icon equipment-icon" aria-hidden="true">00</span>
+        <span class="action-card-copy">
+          <strong>Manage departments and accounts</strong>
+          <span>Create college units, provision staff, and review global audit logs.</span>
+        </span>
+        <span class="action-arrow" aria-hidden="true">&rarr;</span>
+      </a>
+    </div>
+    <div class="col-md-6">
       <a class="action-card" href="/equipment">
         <span class="action-icon equipment-icon" aria-hidden="true">01</span>
         <span class="action-card-copy">
@@ -35,6 +45,16 @@
         <span class="action-card-copy">
           <strong>View borrowing activity</strong>
           <span>Review equipment borrowing activity across the system.</span>
+        </span>
+        <span class="action-arrow" aria-hidden="true">&rarr;</span>
+      </a>
+    </div>
+    <div class="col-md-6">
+      <a class="action-card" href="/reports">
+        <span class="action-icon request-icon" aria-hidden="true">03</span>
+        <span class="action-card-copy">
+          <strong>Preview asset report</strong>
+          <span>Review damaged, lost, and overdue records before downloading.</span>
         </span>
         <span class="action-arrow" aria-hidden="true">&rarr;</span>
       </a>

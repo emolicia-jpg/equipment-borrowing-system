@@ -1,0 +1,49 @@
+<section class="dashboard-welcome">
+  <div class="dashboard-welcome-copy">
+    <span class="eyebrow">EXECUTIVE OVERVIEW</span>
+    <h1><%= user.departmentName %> assets</h1>
+    <p>Read-only equipment utilization and accountability for your department.</p>
+    <span class="role-pill">Dean account</span>
+  </div>
+  <div class="dashboard-mark" aria-hidden="true"><img src="/images/cspc-logo.jpg" alt=""></div>
+</section>
+
+<section class="dashboard-section">
+  <div class="row g-3">
+    <div class="col-sm-6 col-xl-3"><div class="summary-card"><span>Total assets</span><strong><%= deanStats.total_assets %></strong></div></div>
+    <div class="col-sm-6 col-xl-3"><div class="summary-card"><span>Currently borrowed</span><strong><%= deanStats.currently_borrowed %></strong></div></div>
+    <div class="col-sm-6 col-xl-3"><div class="summary-card"><span>In maintenance</span><strong><%= deanStats.maintenance_count %></strong></div></div>
+    <div class="col-sm-6 col-xl-3"><div class="summary-card <%= deanStats.overdue_count ? 'summary-card-alert' : '' %>"><span>Overdue requests</span><strong><%= deanStats.overdue_count %></strong></div></div>
+  </div>
+</section>
+
+<section class="dashboard-section">
+  <div class="section-heading">
+    <div><span class="eyebrow">DEPARTMENT ANALYTICS</span><h2>Borrowing patterns</h2></div>
+    <a class="btn btn-outline-primary" href="/reports">Preview asset report</a>
+  </div>
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="table-card">
+        <div class="table-card-heading"><div><h2>Most requested equipment</h2></div></div>
+        <div class="table-responsive"><table class="table app-table mb-0">
+          <thead class="table-dark"><tr><th>Equipment</th><th>Units requested</th></tr></thead>
+          <tbody><% if (!popularEquipment.length) { %><tr><td colspan="2" class="table-empty-state">No borrowing requests found for <%= user.departmentName %>.</td></tr><% } %>
+            <% popularEquipment.forEach(item => { %><tr><td><%= item.name %></td><td><%= item.request_count %></td></tr><% }) %>
+          </tbody>
+        </table></div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="table-card">
+        <div class="table-card-heading"><div><h2>Peak borrowing periods</h2></div></div>
+        <div class="table-responsive"><table class="table app-table mb-0">
+          <thead class="table-dark"><tr><th>Month</th><th>Requests</th></tr></thead>
+          <tbody><% if (!peakPeriods.length) { %><tr><td colspan="2" class="table-empty-state">No borrowing periods to report yet.</td></tr><% } %>
+            <% peakPeriods.forEach(item => { %><tr><td><%= item.period %></td><td><%= item.request_count %></td></tr><% }) %>
+          </tbody>
+        </table></div>
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,36 @@
+<section class="dashboard-welcome">
+  <div class="dashboard-welcome-copy">
+    <span class="eyebrow">DEPARTMENT ADMINISTRATION</span>
+    <h1><%= user.departmentName %> dashboard</h1>
+    <p>Manage your department’s inventory and borrowing requests. Other departments are not accessible from this account.</p>
+    <span class="role-pill">Department Admin</span>
+  </div>
+  <div class="dashboard-mark" aria-hidden="true"><img src="/images/cspc-logo.jpg" alt=""></div>
+</section>
+
+<section class="dashboard-section">
+  <div class="row g-3">
+    <div class="col-sm-6 col-xl-3"><div class="summary-card"><span>Total assets</span><strong><%= deanStats.total_assets %></strong></div></div>
+    <div class="col-sm-6 col-xl-3"><div class="summary-card"><span>Currently borrowed</span><strong><%= deanStats.currently_borrowed %></strong></div></div>
+    <div class="col-sm-6 col-xl-3"><div class="summary-card"><span>In maintenance</span><strong><%= deanStats.maintenance_count %></strong></div></div>
+    <div class="col-sm-6 col-xl-3"><div class="summary-card <%= deanStats.overdue_count ? 'summary-card-alert' : '' %>"><span>Overdue requests</span><strong><%= deanStats.overdue_count %></strong></div></div>
+  </div>
+</section>
+
+<section class="dashboard-section" aria-labelledby="department-admin-actions">
+  <div class="section-heading">
+    <div><span class="eyebrow">DEPARTMENT TOOLS</span><h2 id="department-admin-actions">Manage <%= user.departmentName %></h2></div>
+    <p>All changes are limited to your assigned department.</p>
+  </div>
+  <div class="row g-4">
+    <div class="col-md-4">
+      <a class="action-card" href="/equipment"><span class="action-icon equipment-icon" aria-hidden="true">01</span><span class="action-card-copy"><strong>Manage equipment</strong><span>Add items, update stock and condition, or remove unused items.</span></span><span class="action-arrow" aria-hidden="true">&rarr;</span></a>
+    </div>
+    <div class="col-md-4">
+      <a class="action-card" href="/requests"><span class="action-icon request-icon" aria-hidden="true">02</span><span class="action-card-copy"><strong>Manage requests</strong><span>Approve, release, reject, and record equipment returns.</span></span><span class="action-arrow" aria-hidden="true">&rarr;</span></a>
+    </div>
+    <div class="col-md-4">
+      <a class="action-card" href="/reports"><span class="action-icon request-icon" aria-hidden="true">03</span><span class="action-card-copy"><strong>Preview asset report</strong><span>Review this department’s report and download it as CSV.</span></span><span class="action-arrow" aria-hidden="true">&rarr;</span></a>
+    </div>
+  </div>
+</section>

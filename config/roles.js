@@ -21,6 +21,8 @@ const PERMISSIONS = {
     'equipment:view',
     'equipment:update_condition',
     'request:view_all',
+    'request:approve',
+    'request:reject',
     'request:deny',
     'request:release',         // FR-5
     'request:return',          // FR-6
@@ -44,6 +46,18 @@ const PERMISSIONS = {
   ],
 
   // Decision-maker
+  department_admin: [
+    'equipment:view',
+    'equipment:update_condition',
+    'equipment:delete',
+    'request:view_all',
+    'request:approve',
+    'request:reject',
+    'request:release',
+    'request:return',
+    'report:view',
+    'notification:view_own'
+  ],
   dean: [
     'equipment:view',
     'request:view_all',
@@ -54,8 +68,16 @@ const PERMISSIONS = {
   // Peripheral
   admin: [                     // IT / System Administrator
     'user:manage',             // accounts and access
+    'department:manage',
+    'audit:view',
     'equipment:view',
+    'equipment:update_condition',
     'equipment:delete',
+    'request:view_all',
+    'request:approve',
+    'request:reject',
+    'request:release',
+    'request:return',
     'report:view',
     'system:backup',
     'notification:view_own'
